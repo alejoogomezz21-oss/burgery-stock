@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Burgery Go — Stock y Pedidos</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="app">
+  <nav class="side">
+    <div class="brand">
+      <h1>Burgery Go</h1>
+      <span>Stock &amp; Pedidos</span>
+    </div>
+    <button data-tab="dashboard" class="active">Dashboard</button>
+    <button data-tab="pedidos">Pedidos</button>
+    <button data-tab="historial">Historial</button>
+    <button data-tab="productos">Productos</button>
+    <button data-tab="insumos">Stock / Insumos</button>
+  </nav>
+
+  <main>
+
+    <!-- ================= DASHBOARD ================= -->
+    <section id="tab-dashboard" class="tab active">
+      <div class="tab-head"><div><h2>Dashboard</h2><p>Resumen del día</p></div></div>
+      <div class="stats">
+        <div class="stat"><div class="num" id="stat-pedidos-hoy">0</div><div class="lbl">Pedidos hoy</div></div>
+        <div class="stat"><div class="num" id="stat-ventas-hoy">$0</div><div class="lbl">Vendido hoy</div></div>
+        <div class="stat"><div class="num" id="stat-ganancias-hoy">$0</div><div class="lbl">Ganancias hoy</div></div>
+        <div class="stat"><div class="num" id="stat-insumos-bajos">0</div><div class="lbl">Insumos en nivel bajo</div></div>
+      </div>
+      <h3 style="font-size:15px;margin-bottom:10px">Alertas de stock</h3>
+      <div id="dashboard-alertas"></div>
+    </section>
+
+    <!-- ================= PEDIDOS ================= -->
+    <section id="tab-pedidos" class="tab">
+      <div class="tab-head">
+        <div><h2>Pedidos</h2><p>Registra aquí lo que te escriben por WhatsApp</p></div>
+        <button class="btn" id="btn-nuevo-pedido">+ Nuevo pedido</button>
+      </div>
+      <div id="lista-pedidos"></div>
+    </section>
+
+    <!-- ================= HISTORIAL ================= -->
+    <section id="tab-historial" class="tab">
+      <div class="tab-head">
+        <div><h2>Historial</h2><p>Ventas y ganancias agrupadas por día</p></div>
+      </div>
+      <div id="lista-historial"></div>
+    </section>
+
+    <!-- ================= PRODUCTOS ================= -->
+    <section id="tab-productos" class="tab">
+      <div class="tab-head">
+        <div><h2>Productos</h2><p>Lo que vendes, con su receta de insumos</p></div>
+        <button class="btn" id="btn-nuevo-producto">+ Nuevo producto</button>
+      </div>
+      <div id="lista-productos"></div>
+    </section>
+
+    <!-- ================= INSUMOS / STOCK ================= -->
+    <section id="tab-insumos" class="tab">
+      <div class="tab-head">
+        <div><h2>Stock / Insumos</h2><p>Lo que compras: pan, carne, queso, salsas...</p></div>
+        <button class="btn" id="btn-nuevo-insumo">+ Nuevo insumo</button>
+      </div>
+      <div class="grid-stock" id="lista-insumos"></div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ============ MODAL: insumo ============ -->
+<div class="overlay" id="modal-insumo">
+  <div class="modal">
+    <h3 id="modal-insumo-titulo">Nuevo insumo</h3>
+    <form id="form-insumo">
+      <label>Nombre</label>
+      <input name="nombre" required placeholder="ej: Carne de res (lb)">
+      <label>Unidad</label>
+      <select name="unidad">
+        <option value="g">g (gramos)</option>
+        <option value="kg">kg</option>
+        <option value="ml">ml</option>
+        <option value="l">l</option>
+        <option value="unidad">unidad</option>
+      </select>
+      <label>Stock actual</label>
+      <input name="stock" type="number" step="0.01" required placeholder="ej: 5000">
+      <label>Stock mínimo (para avisarte)</label>
+      <input name="stockMinimo" type="number" step="0.01" required placeholder="ej: 1000">
+      <label>Costo por unidad (lo que te cuesta 1 g, 1 ml o 1 unidad, según lo que elegiste arriba)</label>
+      <input name="costoUnidad" type="number" step="0.01" required placeholder="ej: si 1kg de carne cuesta $18000, y la unidad es 'g', pon 18">
+      <div class="modal-acciones">
+        <button type="button" class="btn secundario" data-cerrar>Cancelar</button>
+        <button type="submit" class="btn">Guardar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ============ MODAL: sumar stock ============ -->
+<div class="overlay" id="modal-sumar-stock">
+  <div class="modal">
+    <h3>Ingreso de stock — <span id="sumar-nombre-insumo"></span></h3>
+    <form id="form-sumar-stock">
+      <label>Cantidad que compraste / ingresó</label>
+      <input name="cantidad" type="number" step="0.01" required autofocus>
+      <div class="modal-acciones">
+        <button type="button" class="btn secundario" data-cerrar>Cancelar</button>
+        <button type="submit" class="btn">Sumar al stock</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ============ MODAL: producto ============ -->
+<div class="overlay" id="modal-producto">
+  <div class="modal">
+    <h3 id="modal-producto-titulo">Nuevo producto</h3>
+    <form id="form-producto">
+      <label>Nombre</label>
+      <input name="nombre" required placeholder="ej: Smash Clásica">
+      <label>Precio de venta</label>
+      <input name="precio" type="number" step="100" required placeholder="ej: 18000">
+
+      <label style="margin-top:16px">Receta (insumos que usa 1 unidad)</label>
+      <div id="filas-receta"></div>
+      <button type="button" class="btn secundario" style="margin-top:8px;font-size:12.5px;padding:6px 10px" id="btn-agregar-ingrediente">+ Agregar ingrediente</button>
+
+      <div class="modal-acciones">
+        <button type="button" class="btn secundario" data-cerrar>Cancelar</button>
+        <button type="submit" class="btn">Guardar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ============ MODAL: pedido ============ -->
+<div class="overlay" id="modal-pedido">
+  <div class="modal">
+    <h3>Nuevo pedido</h3>
+    <form id="form-pedido">
+      <div id="filas-pedido"></div>
+      <button type="button" class="btn secundario" style="margin-top:10px;font-size:12.5px;padding:6px 10px" id="btn-agregar-item-pedido">+ Agregar producto</button>
+
+      <div class="total-pedido">Total: <span id="total-pedido">$0</span></div>
+      <div class="aviso" id="aviso-pedido" style="display:none"></div>
+
+      <div class="modal-acciones">
+        <button type="button" class="btn secundario" data-cerrar>Cancelar</button>
+        <button type="submit" class="btn">Registrar pedido y descontar stock</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>
